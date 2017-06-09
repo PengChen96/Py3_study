@@ -1,0 +1,47 @@
+﻿　央视网消息：绿色，象征着生命。绿色发展，是对山川草木生命之延替的期盼，更是对人类经济社会可持续发展的追求。
+
+　　"践行绿色发展的新理念，倡导绿色、低碳、循环、可持续的生产生活方式，加强生态环保合作，建设生态文明。"习近平主席提出的生态理念和新发展观，在他身体力行地推动下，正在成为世界认可的中国经验。
+
+　　步入生态时代，人类社会的发展和环境保护不应再是矛盾对立的两面。习近平主席在多个国际场合就绿色发展发出的呼吁，得到国际社会的普遍认同和响应。
+
+　　在"一带一路"国际合作高峰论坛上，联合国环境规划署执行主任埃里克.索尔海姆在演讲时深情引用"绿水青山就是金山银山"，以描绘其心目中的理想图景。
+
+　　央视网微视频工作室推出《绿色发展 走向世界》，展现一个大国领袖的初心、一个东方智慧的答案和一个大国的责任与担当。
+from PIL import Image
+from numpy import *
+
+def ImgToMnist(filelist):
+    width=28
+    height=28
+    value=zeros([1,width,height,1])
+    value[0,0,0,0]=-1
+    label=zeros([1,10])
+    label[0,0]=-1
+
+    # print(filelist)
+
+    for filename in filelist:
+        img=array(Image.open(filename).convert("L"))
+        width,height=shape(img);
+        index=0
+        tmp_value=zeros([1,width,height,1])
+        for i in range(width):
+            for j in range(height):
+                tmp_value[0,i,j,0]=img[i,j]
+                index+=1
+
+        if(value[0,0,0,0]==-1):
+            value=tmp_value
+        else:
+            value=concatenate((value,tmp_value))
+
+        tmp_label=zeros([1,10])
+        index=int(filename.strip().split('/')[2][0])
+        print("input:",index)
+        tmp_label[0,index]=1
+        if(label[0,0]==-1):
+            label=tmp_label
+        else:
+            label=concatenate((label,tmp_label))
+
+    return array(value),array(label)
