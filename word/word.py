@@ -1,4 +1,5 @@
 from os import path
+# 安装scipy模块前，先安装numpy+mkl
 from scipy.misc import imread
 import matplotlib.pyplot as plt
 # import jieba
