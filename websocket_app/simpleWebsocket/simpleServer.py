@@ -592,6 +592,7 @@ class SimpleWebSocketServer(object):
    def close(self):
       self.serversocket.close()
 
+
       for desc, conn in self.connections.items():
          conn.close()
          self._handleClose(conn)

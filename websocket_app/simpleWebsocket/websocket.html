@@ -45,7 +45,7 @@
   function onError(evt)
   {
     writeToScreen('error: ' + evt.data + '\n');
-
+    console.log(evt);
 	websocket.close();
 
 	document.myform.connectButton.disabled = false;
