@@ -219,4 +219,4 @@ class WebSocketServer(object):
 
 if __name__ == "__main__":
     server = WebSocketServer()
-    server.begin()  
+    server.begin()
