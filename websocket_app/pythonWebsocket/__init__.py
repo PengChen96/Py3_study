@@ -3,6 +3,7 @@ import socket
 import base64,hashlib
 import threading
 import struct
+import time
 
 HANDSHAKE_STR = (
    "HTTP/1.1 101 Switching Protocols\r\n"
@@ -12,13 +13,17 @@ HANDSHAKE_STR = (
 )
 GUID_STR = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
-
+g_header_length = 0
+g_code_length = 0
 
 class WebSocket(threading.Thread):
     def __init__(self,conn,addr):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.buffer = bytes("",encoding="utf-8")
+        self.buffer_utf8 = ""
+        self.length_buffer = 0
 
     # 组装header 获取‘Sec-WebSocket-Key’
     def parseHeaders(self, msg):
@@ -48,11 +53,11 @@ class WebSocket(threading.Thread):
         if g_code_length == 126:
             # g_code_length = msg[2:4]
             # g_code_length = (ord(msg[2])<<8) + (ord(msg[3]))
-            g_code_length = struct.unpack('>H', str(msg[2:4]))[0]
+            g_code_length = struct.unpack('!H', msg[2:4])[0]
             g_header_length = 8
         elif g_code_length == 127:
             # g_code_length = msg[2:10]
-            g_code_length = struct.unpack('>Q', str(msg[2:10]))[0]
+            g_code_length = struct.unpack('!Q', msg[2:10])[0]
             g_header_length = 14
         else:
             g_header_length = 6
@@ -60,14 +65,16 @@ class WebSocket(threading.Thread):
         return g_code_length
     # 解析数据
     def parseData(self,msg):
-        g_code_length = ord(msg[1]) & 127
+        g_code_length = msg[1] & 127
         received_length = 0;
         if g_code_length == 126:
-            g_code_length = struct.unpack('>H', str(msg[2:4]))[0]
+            m = msg[2:4]
+            print(m)
+            g_code_length = struct.unpack('!H', msg[2:4])[0]
             masks = msg[4:8]
             data = msg[8:]
         elif g_code_length == 127:
-            g_code_length = struct.unpack('>Q', str(msg[2:10]))[0]
+            g_code_length = struct.unpack('!Q', msg[2:10])[0]
             masks = msg[10:14]
             data = msg[14:]
         else:
@@ -78,35 +85,43 @@ class WebSocket(threading.Thread):
         raw_str = ''
 
         for d in data:
-            raw_str += chr(ord(d) ^ ord(masks[i % 4]))
+            raw_str += chr(d ^ masks[i % 4])
             i += 1
 
         print(u"总长度是：%d" % int(g_code_length))
         return raw_str
     # 发送消息
     def sendMessage(self,conn,message):
-        message_utf_8 = message.encode('utf-8')
-        back_str = []
-        back_str.append('\x81')
-        data_length = len(message_utf_8)
+        payload = bytearray()
+        b1 = 0x80 | 0x1    #  0x81  129
+        b2 = 0
+        payload.append(b1)
 
-        if data_length <= 125:
-            back_str.append(chr(data_length))
-        elif data_length <= 65535:
-            back_str.append(struct.pack('b', 126))
-            back_str.append(struct.pack('>h', data_length))
-        elif data_length <= (2 ^ 64 - 1):
-            back_str.append(struct.pack('b', 127))
-            back_str.append(struct.pack('>q', data_length))
+        message_utf_8 = message.encode('utf-8')
+        msg_len = len(message_utf_8)
+        # print(msg_len)
+
+        if msg_len <= 125:
+            b2 |= msg_len
+            payload.append(b2)
+        elif msg_len >= 126 and msg_len <= 65535:
+            b2 |= 126
+            payload.append(b2)
+            payload.extend(struct.pack("!H", msg_len))
+        elif msg_len <= (2 ^ 64 - 1):
+            b2 |= 127
+            payload.append(b2)
+            payload.extend(struct.pack("!Q", msg_len))
         else:
             print(u'太长了')
-        msg = ''
-        for c in back_str:
-            msg += c;
-        back_str = str(msg) + str(message_utf_8)
-        if back_str != None and len(back_str) > 0:
-            print(back_str)
-            conn.send(bytes(back_str, encoding="utf-8"))
+        print(payload)
+
+        if msg_len > 0:
+            payload.extend(message_utf_8)
+        if payload != None and len(payload) > 0:
+            # print(payload)
+            # 格式大概这样：bytearray(b'\x81\x0cHello World!')   '\x0c'是发送的数据长度
+            conn.send(payload)
 
     # 线程
     def run(self):
@@ -124,12 +139,12 @@ class WebSocket(threading.Thread):
                 g_code_length = 0
             else:
                 message = self.conn.recv(128)
+                print(type(message))
+                self.buffer += message
+                self.buffer_utf8 = self.parseData(self.buffer)          #str
+                self.sendMessage(self.conn,self.buffer_utf8)
                 print(message)
-                if len(message) <= 0:
-                    continue
-                if g_code_length == 0:
-                    self.getMsglen(message)
-                print(message)
+                self.buffer = bytes("",encoding="utf-8")
 
 
 class websocketServer(object):
