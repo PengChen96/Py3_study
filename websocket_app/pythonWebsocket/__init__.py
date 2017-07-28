@@ -54,9 +54,6 @@ class WebSocket(threading.Thread):
         return s_res
     # 得到数据长度
     def getMsglen(self,msg):
-        print(len(msg))
-        print(msg[0])
-        print(msg[1])
         g_code_length = msg[1] & 127
         received_length = 0;
         if g_code_length == 126:
@@ -155,9 +152,11 @@ class WebSocket(threading.Thread):
                 self.conn.sendall(str.encode(handData))
                 self.isHandShake = True
             else:
-                message = self.conn.recv(16384)    # 16 * 1024      # bytes
-                print(type(message))
-                self.buffer += message                              # bytes
+                message = self.conn.recv(128)    # 16 * 1024      # bytes
+                print("---")
+                print(len(message))
+                print("--")
+                self.buffer.extend(message)                         # bytes
                 self.buffer_utf8 = self.parseData(self.buffer)      # str
                 self.sendMessage(self.buffer_utf8)
                 print(message)
