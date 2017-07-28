@@ -55,18 +55,14 @@ class WebSocket(threading.Thread):
     # 得到数据长度
     def getMsglen(self,msg):
         g_code_length = msg[1] & 127
-        received_length = 0;
         if g_code_length == 126:
-            # g_code_length = msg[2:4]
-            # g_code_length = (ord(msg[2])<<8) + (ord(msg[3]))
             g_code_length = struct.unpack('!H', msg[2:4])[0]
-            g_header_length = 8
+            g_code_length += 8
         elif g_code_length == 127:
-            # g_code_length = msg[2:10]
             g_code_length = struct.unpack('!Q', msg[2:10])[0]
-            g_header_length = 14
+            g_code_length += 14
         else:
-            g_header_length = 6
+            g_code_length += 6
         g_code_length = int(g_code_length)
         return g_code_length
     # 解析数据
@@ -156,6 +152,9 @@ class WebSocket(threading.Thread):
                 print("---")
                 print(len(message))
                 print("--")
+                code_length = self.getMsglen(message)   # 数据中带的 数据长度
+                if code_length == len(message):
+                    pass
                 self.buffer.extend(message)                         # bytes
                 self.buffer_utf8 = self.parseData(self.buffer)      # str
                 self.sendMessage(self.buffer_utf8)
