@@ -19,19 +19,14 @@ CLOSE = 0x8
 PING = 0x9
 PONG = 0xA
 
-g_header_length = 0
-g_code_length = 0
 
 class WebSocket(threading.Thread):
     def __init__(self,conn,addr):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
-
+        #发送的数据缓存
         self.buffer = bytearray()
-        self.buffer_utf8 = ""
-        self.length_buffer = 0
-
         self.sendToClientData = deque()
 
     # 组装header 获取‘Sec-WebSocket-Key’
@@ -151,8 +146,8 @@ class WebSocket(threading.Thread):
                 code_length = self.getMsglen(self.buffer)  # 数据中带的 数据长度（包含描述字节）
                 # 数据完整就发送
                 if code_length == len(self.buffer):
-                    self.buffer_utf8 = self.parseData(self.buffer)      # str
-                    self.sendMessage(self.buffer_utf8)
+                    buffer_utf = self.parseData(self.buffer)      # str
+                    self.sendMessage(buffer_utf)
                     print(message)
                     self.buffer = bytearray()
 
