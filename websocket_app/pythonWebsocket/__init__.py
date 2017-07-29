@@ -52,7 +52,7 @@ class WebSocket(threading.Thread):
         accept_token = base64.b64encode(hashlib.sha1(key).digest()).decode("ascii")
         s_res = HANDSHAKE_STR % {'token': accept_token}
         return s_res
-    # 得到数据长度
+    # 得到数据长度 （包含描述字节）
     def getMsglen(self,msg):
         g_code_length = msg[1] & 127
         if g_code_length == 126:
@@ -68,7 +68,6 @@ class WebSocket(threading.Thread):
     # 解析数据
     def parseData(self,msg):
         g_code_length = msg[1] & 127
-        received_length = 0;
         if g_code_length == 126:
             g_code_length = struct.unpack('!H', msg[2:4])[0]
             masks = msg[4:8]
@@ -82,7 +81,6 @@ class WebSocket(threading.Thread):
             data = msg[6:]
 
         i = 0
-
         raw_by = bytearray()
         for d in data:
             raw_by.append( int(d) ^ int(masks[i % 4]) )
@@ -148,18 +146,15 @@ class WebSocket(threading.Thread):
                 self.conn.sendall(str.encode(handData))
                 self.isHandShake = True
             else:
-                message = self.conn.recv(128)    # 16 * 1024      # bytes
-                print("---")
-                print(len(message))
-                print("--")
-                code_length = self.getMsglen(message)   # 数据中带的 数据长度
-                if code_length == len(message):
-                    pass
-                self.buffer.extend(message)                         # bytes
-                self.buffer_utf8 = self.parseData(self.buffer)      # str
-                self.sendMessage(self.buffer_utf8)
-                print(message)
-                self.buffer = bytearray()
+                message = self.conn.recv(128)    # 16 * 1024   16384   # bytes
+                self.buffer.extend(message)  # bytes
+                code_length = self.getMsglen(self.buffer)  # 数据中带的 数据长度（包含描述字节）
+                # 数据完整就发送
+                if code_length == len(self.buffer):
+                    self.buffer_utf8 = self.parseData(self.buffer)      # str
+                    self.sendMessage(self.buffer_utf8)
+                    print(message)
+                    self.buffer = bytearray()
 
 connections = {}
 class websocketServer(object):
