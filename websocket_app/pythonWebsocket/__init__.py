@@ -98,7 +98,7 @@ class WebSocket(threading.Thread):
                     data = self.sendToClientData.popleft()
                     conn.send(data[1])
 
-    # FIN 后面是否还有数据；opcode 传输的数据包类型；message 传输的数据
+    # FIN 后面是否还有数据；opcode 传输的数据包类型；message 传输的数据(str)
     def _sendMessage(self,FIN,opcode,message):
         payload = bytearray()
         b1 = 0

@@ -103,7 +103,23 @@
 <input type="button" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
 <input type="button" name=connectButton value="Connect" onClick="doConnect();">
 </p>
-
+<input type="file" id="imgFile" onchange="getFile()">
+    <script>
+        function getFile(){
+            var f = document.getElementById("imgFile");
+            var file = f.files[0];
+            console.log(file);
+//            websocket.send(file.name);
+            var render = new FileReader();
+            render.readAsArrayBuffer(file);
+            render.onload = function loaded(evt){
+                var blob = evt.target.result;
+                console.log(evt.target);
+                console.log(blob);
+                websocket.send(blob);
+            }
+        }
+    </script>
 
 </form>
 </html> 
