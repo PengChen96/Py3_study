@@ -4,17 +4,15 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" type="text/javascript"></script>
+    <!--<script src="jQuery_v2.1.1.js"></script>-->
 </head>
 <body>
     <button onclick="a()">test</button>
     <script>
         function a() {
             $.ajax({
-                url:"http://192.168.56.1:8000/",
-                method:"get",
-                dataType:"jsonp",
-//                contentType: 'application/json; charset=utf-8',
-//                crossDomain: true,
+                url:"http://127.0.0.1:5000/todo/api/v1.0/tasks",
+                method:"GET",
                 success:function(data){
                     console.log("json:");
                     console.log(data);

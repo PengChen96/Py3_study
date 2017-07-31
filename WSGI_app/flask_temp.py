@@ -1,12 +1,14 @@
+
 #!flask/bin/python
-from flask import Flask,jsonify
-import json
+from flask import Flask,jsonify,send_file
+from flask_cors import *
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 
 @app.route('/')
 def index():
-    return "Hello, World!"
+    return send_file('unitTest.html')
 
 tasks = [
     {
@@ -24,7 +26,7 @@ tasks = [
 ]
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
-    return json.dumps(tasks)
+    return jsonify(tasks)
 
 
 if __name__ == '__main__':
