@@ -113,6 +113,7 @@ class WebSocket(threading.Thread):
 
         if msg_len <= 125:
             b2 |= msg_len
+
             payload.append(b2)
         elif msg_len >= 126 and msg_len <= 65535:
             b2 |= 126
@@ -134,7 +135,7 @@ class WebSocket(threading.Thread):
     # 端开连接
     def _disConnected(self):
         self.conn.close()
-        print("断开的连接conn%s"%(self.index))
+        print("断开的连接conn%s" % (self.index))
         print(connections)
         del connections['conn%s' % (self.index)]
         print(connections)
@@ -154,7 +155,8 @@ class WebSocket(threading.Thread):
             else:
                 message = self.conn.recv(16384)    # 16 * 1024   16384   # bytes
                 print(message)
-                if message[0]==136:
+                # 断开连接
+                if message[0]&127 == CLOSE:    # 0x88   136
                     self._disConnected()
                     return
                 self.buffer.extend(message)  # bytes
