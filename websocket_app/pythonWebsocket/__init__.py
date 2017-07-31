@@ -21,8 +21,9 @@ PONG = 0xA
 
 
 class WebSocket(threading.Thread):
-    def __init__(self,conn,addr):
+    def __init__(self,conn,addr,index):
         threading.Thread.__init__(self)
+        self.index = index
         self.conn = conn
         self.addr = addr
         #发送的数据缓存
@@ -59,6 +60,7 @@ class WebSocket(threading.Thread):
         else:
             g_code_length += 6
         g_code_length = int(g_code_length)
+        print(g_code_length)
         return g_code_length
     # 解析数据
     def parseData(self,msg):
@@ -80,8 +82,10 @@ class WebSocket(threading.Thread):
         for d in data:
             raw_by.append( int(d) ^ int(masks[i % 4]) )
             i += 1
+        print(raw_by)
         print(u"总长度是：%d" % int(g_code_length))
         raw_str = raw_by.decode()
+        # raw_str = str(raw_by)
         return raw_str
     # 发送消息
     def sendMessage(self,message):
@@ -126,7 +130,14 @@ class WebSocket(threading.Thread):
             payload.extend(msg_utf)
 
         self.sendToClientData.append((opcode,payload))
-        pass
+
+    # 端开连接
+    def _disConnected(self):
+        self.conn.close()
+        print("断开的连接conn%s"%(self.index))
+        print(connections)
+        del connections['conn%s' % (self.index)]
+        print(connections)
     # 线程
     def run(self):
         # print(self.listeners)
@@ -141,7 +152,11 @@ class WebSocket(threading.Thread):
                 self.conn.sendall(str.encode(handData))
                 self.isHandShake = True
             else:
-                message = self.conn.recv(128)    # 16 * 1024   16384   # bytes
+                message = self.conn.recv(16384)    # 16 * 1024   16384   # bytes
+                print(message)
+                if message[0]==136:
+                    self._disConnected()
+                    return
                 self.buffer.extend(message)  # bytes
                 code_length = self.getMsglen(self.buffer)  # 数据中带的 数据长度（包含描述字节）
                 # 数据完整就发送
@@ -161,17 +176,18 @@ class websocketServer(object):
 
     def server(self):
         print(self.serversocket)
-        i =0
+        index =0
         while True:
             conn,addr = self.serversocket.accept()
             print(conn)
             print(addr)
             # 新建线程
-            newSocket = WebSocket(conn,addr)
+            newSocket = WebSocket(conn,addr,index)
             # 开始线程,执行run函数
             newSocket.start()
-            connections['conn%s'% (i)] = conn
-            i += 1
+            connections['conn%s'% (index)] = conn
+            index += 1
+            print(connections)
 
 
 websocketServer = websocketServer("127.0.0.1",8000)
