@@ -11,8 +11,11 @@
     <script>
         function a() {
             $.ajax({
-                url:"http://127.0.0.1:5000/todo/api/v1.0/tasks",
-                method:"GET",
+                url: "http://127.0.0.1:5000/todo/api/v1.0/tasks",
+                method: "GET",
+//                dataType: "jsonp",
+//                jsonp: "callback",
+//                jsonpCallback: 'list',
                 success:function(data){
                     console.log("json:");
                     console.log(data);
@@ -25,6 +28,9 @@
                 }
             })
         }
+//        function list(b){
+//            console.log(b);
+//        }
     </script>
 </body>
 </html>

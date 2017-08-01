@@ -1,4 +1,4 @@
-
-    ttf:    字体
-
-    word：   词云  wordcloud
+pip导出你的dependency:
+$ pip freeze > requirements.txt
+安装dependency:
+$ pip install -r requirements.txt
