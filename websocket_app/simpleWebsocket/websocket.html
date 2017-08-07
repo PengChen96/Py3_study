@@ -41,6 +41,16 @@
   function onMessage(evt)
   {
     writeToScreen("response: " + evt.data + '\n');
+    var reader = new FileReader();
+    reader.onload=function(eve){
+         if(eve.target.readyState==FileReader.DONE)
+         {
+            var img = document.createElement("img");
+            img.src=this.result;
+            document.getElementById("plane").appendChild(img);
+         }
+     };
+     reader.readAsDataURL(evt.data);
   }
 
   function onError(evt)
@@ -122,5 +132,6 @@
     </script>
 
 </form>
+<div id="plane">1</div>
 </html> 
 

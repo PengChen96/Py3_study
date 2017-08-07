@@ -27,6 +27,7 @@ class WebSocket(threading.Thread):
         self.conn = conn
         self.addr = addr
         #发送的数据缓存
+        self.opcode = TEXT          #接收的数据类型  默认TEXT
         self.buffer = bytearray()
         self.sendToClientData = deque()
 
@@ -49,7 +50,7 @@ class WebSocket(threading.Thread):
         s_res = HANDSHAKE_STR % {'token': accept_token}
         return s_res
     # 得到数据长度 （包含描述字节）
-    def getMsglen(self,msg):
+    def getMsglen(self,msg):        #msg : bytes
         g_code_length = msg[1] & 127
         if g_code_length == 126:
             g_code_length = struct.unpack('!H', msg[2:4])[0]
@@ -63,7 +64,10 @@ class WebSocket(threading.Thread):
         print(g_code_length)
         return g_code_length
     # 解析数据
-    def parseData(self,msg):
+    def parseData(self,msg):    # msg : bytes
+        self.opcode = msg[0]&127        # 接收到的数据类型
+        # print(msg[0]&127==TEXT)
+        print("----%s"%(self.opcode))
         g_code_length = msg[1] & 127
         if g_code_length == 126:
             g_code_length = struct.unpack('!H', msg[2:4])[0]
@@ -84,22 +88,29 @@ class WebSocket(threading.Thread):
             i += 1
         print(raw_by)
         print(u"总长度是：%d" % int(g_code_length))
-        raw_str = raw_by.decode()
-        # raw_str = str(raw_by)
-        return raw_str
+        # raw_str = raw_by.decode()
+        return raw_by       # bytearray
     # 发送消息
-    def sendMessage(self,message):
+    def sendMessage(self,message):      # message: bytes
         # 遍历连接上的列表
         for conn in connections.values():
             # 发送消息到client （除了自己）
             if conn != self.conn:
-                self._sendMessage(False,TEXT,message)
+                self._sendMessage(False,self.opcode,message)
                 while self.sendToClientData:
                     data = self.sendToClientData.popleft()
                     conn.send(data[1])
 
-    # FIN 后面是否还有数据；opcode 传输的数据包类型；message 传输的数据(str)
+    # FIN 后面是否还有数据；opcode 传输的数据包类型；message 传输的数据(bytes)
     def _sendMessage(self,FIN,opcode,message):
+        print(opcode)
+        if opcode == TEXT:
+            opcode = TEXT
+            msg_true = message.decode().encode('utf-8')     # 真正发送的Text数据 (bytes → str utf-8)
+        elif opcode == BINARY:
+            opcode = BINARY
+            msg_true = message          # 真正发送的图片二进制数据
+
         payload = bytearray()
         b1 = 0
         b2 = 0
@@ -108,8 +119,8 @@ class WebSocket(threading.Thread):
         b1 |= opcode        # 若opcode=TEXT    b'0x81'
 
         payload.append(b1)      #
-        msg_utf = message.encode('utf-8')
-        msg_len = len(msg_utf)
+        # msg_utf = message.encode('utf-8')
+        msg_len = len(msg_true)
 
         if msg_len <= 125:
             b2 |= msg_len
@@ -119,7 +130,7 @@ class WebSocket(threading.Thread):
             b2 |= 126
             payload.append(b2)
             payload.extend(struct.pack("!H", msg_len))
-        elif msg_len <= (2 ^ 64 - 1):
+        elif msg_len <= (2**64 - 1):
             b2 |= 127
             payload.append(b2)
             payload.extend(struct.pack("!Q", msg_len))
@@ -128,7 +139,7 @@ class WebSocket(threading.Thread):
         # 拼接上需要发送的数据
         # 格式大概这样：bytearray(b'\x81\x0cHello World!')   '\x0c'是发送的数据长度
         if msg_len > 0:
-            payload.extend(msg_utf)
+            payload.extend(msg_true)
 
         self.sendToClientData.append((opcode,payload))
 
@@ -163,8 +174,8 @@ class WebSocket(threading.Thread):
                 code_length = self.getMsglen(self.buffer)  # 数据中带的 数据长度（包含描述字节）
                 # 数据完整就发送
                 if code_length == len(self.buffer):
-                    buffer_utf = self.parseData(self.buffer)      # str
-                    self.sendMessage(buffer_utf)
+                    buffer_by = self.parseData(self.buffer)      # bytes
+                    self.sendMessage(buffer_by)
                     print(message)
                     self.buffer = bytearray()
 
