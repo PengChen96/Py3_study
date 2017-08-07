@@ -1,4 +1,4 @@
-from simpleServer import SimpleWebSocketServer, WebSocket
+from websocket_app.simpleWebsocket.simpleServer import SimpleWebSocketServer, WebSocket
 
 clients = []
 class SimpleChat(WebSocket):
