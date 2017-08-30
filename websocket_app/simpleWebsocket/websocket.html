@@ -9,7 +9,8 @@
 
   function init()
   {
-	document.myform.url.value = "ws://localhost:8000/"
+//	document.myform.url.value = "ws://119.23.209.74:8000/"
+    document.myform.url.value = "ws://192.168.56.1:8000/"
 	document.myform.inputtext.value = "Hello World!"
 	document.myform.disconnectButton.disabled = true;
   }
@@ -41,16 +42,16 @@
   function onMessage(evt)
   {
     writeToScreen("response: " + evt.data + '\n');
-    var reader = new FileReader();
-    reader.onload=function(eve){
-         if(eve.target.readyState==FileReader.DONE)
-         {
-            var img = document.createElement("img");
-            img.src=this.result;
-            document.getElementById("plane").appendChild(img);
-         }
-     };
-     reader.readAsDataURL(evt.data);
+//    var reader = new FileReader();
+//    reader.onload=function(eve){
+//         if(eve.target.readyState==FileReader.DONE)
+//         {
+//            var img = document.createElement("img");
+//            img.src=this.result;
+//            document.getElementById("plane").appendChild(img);
+//         }
+//     };
+//     reader.readAsDataURL(evt.data);
   }
 
   function onError(evt)

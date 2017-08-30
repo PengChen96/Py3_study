@@ -203,5 +203,5 @@ class websocketServer(object):
             print(connections)
 
 
-websocketServer = websocketServer("127.0.0.1",8000)
+websocketServer = websocketServer("0.0.0.0",8000)
 websocketServer.server()
